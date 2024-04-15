@@ -1,2 +1,2 @@
-# kinetic_annotate
+# kinet_annotate
 cell annotation and kinetochore signal measurement guide
