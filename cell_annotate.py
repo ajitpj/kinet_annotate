@@ -25,5 +25,5 @@ data_dir = parent_dir / '20240301' #'Analysis' #/
 files = list(data_dir.glob('*.nd2'))
 #
 viewer=napari.Viewer()
-v = roi_Annotate({'choices': files}, viewer)
+v = roi_annotate({'choices': files}, viewer)
 viewer.window.add_dock_widget(v)

@@ -20,3 +20,4 @@ class kinet_annotate_defaults:
             self.open_footprint= ball(1)
             self.min_kinet_size= 8
             self.drop_first_   = 5
+            self.gauss_width   = 0.5

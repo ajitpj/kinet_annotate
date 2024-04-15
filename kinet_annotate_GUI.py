@@ -18,6 +18,7 @@ from typing import List, Dict
 from kinet_annotate_defaults import kinet_annotate_defaults
 
 
+
 @magicclass
 class roi_annotate(MagicTemplate):
 
@@ -116,7 +117,8 @@ class roi_annotate(MagicTemplate):
                                      blending="additive")
         self.bkg_subtracted = white_tophat(self.current_refstack, 
                                            self.default_pars.bkg_footprint)
-        self.bkg_subtracted = gaussian(self.bkg_subtracted, sigma=0.5,
+        self.bkg_subtracted = gaussian(self.bkg_subtracted, 
+                                       sigma=self.default_pars.gauss_width,
                                        preserve_range=True)
         
         cell_cats = self.default_pars.combo_labels
@@ -200,7 +202,7 @@ class roi_annotate(MagicTemplate):
                 
                 
         # to store all the data
-        analysis_df = pd.DataFrame({"cell_id"    :cell_id, 
+        analysis_df = pd.DataFrame({"cell_id"    : cell_id, 
                                     "annotation" : annotation,
                                     "centroid"   : centroid,
                                     "threshold"  : threshold,
@@ -219,11 +221,15 @@ class roi_annotate(MagicTemplate):
 
     @Frame3.save_butt.connect
     def _save_data(self):
+        import json
         to_be_saved = pd.DataFrame()
         for key in self.data_dict:
             print(key)
             temp = self.data_dict[key]
             temp["file_id"] = key
             to_be_saved = pd.concat([to_be_saved,temp])
+        
+        with open(self.current_file_id.parent / 'Analysis.json', 'w') as file:
+            json.dump(self.data_dict, file)
             
         to_be_saved.to_excel(self.current_file_id.parent / 'Analysis.xlsx')
