@@ -3,17 +3,6 @@ from pathlib import Path
 import napari
 import numpy as np
 import pandas as pd
-from skimage import measure
-from skimage.morphology import white_tophat, disk, ball
-from skimage.filters import median, threshold_otsu, gaussian
-from skimage.morphology import opening, remove_small_objects, label
-from scipy.ndimage import binary_fill_holes
-from magicgui import magicgui, widgets
-from magicclass import magicclass, MagicTemplate
-from magicclass.widgets import PushButton, Select, ComboBox, Slider
-from magicclass import field
-from napari.types import ImageData, ArrayLike, LayerDataTuple
-from typing import List, Dict
 from kinet_annotate_GUI import roi_annotate
 
 
