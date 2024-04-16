@@ -78,18 +78,17 @@ class roi_annotate(MagicTemplate):
         
          return threshold, stack_mask
     
-    def _calculate_signal(self, stack: ImageData, mask: ImageData):
-        #
+    def _calculate_signal(self, stack: ImageData, mask: ImageData, cell: ImageData):
+        # stack = raw data
+        # mask  = kinetochore mask
+        # cell  = cell region
         signal = stack * mask
-        signal = signal[signal>0]
+        signal = np.ravel(signal[signal>0])
 
-        bkg    = stack * ~mask
-        bkg    = bkg[bkg>0]
-
-        sig_pixels = np.ravel(signal)
-        bkg_pixels = np.ravel(bkg)
+        bkg    = np.logical_and(stack * ~mask, cell)
+        bkg    = np.ravel(bkg[bkg>0])
         
-        return sig_pixels.mean(), np.mean(bkg_pixels), sig_pixels, bkg_pixels
+        return signal.mean(), bkg.mean(), signal, bkg
     
 
     @Frame2.file_select.connect
@@ -187,14 +186,16 @@ class roi_annotate(MagicTemplate):
                 kinet_mask = np.logical_and(kinet_mask, current_cell)
                 
                 target = self._calculate_signal(self.current_tarstack[self.default_pars.drop_first_+1::, :, :],
-                                                kinet_mask[self.default_pars.drop_first_+1::, :, :])
+                                                kinet_mask[self.default_pars.drop_first_+1::, :, :],
+                                                current_cell)
                 tar_signal.append(target[0])
                 tar_bkg.append(target[1])
                 tar_pixels.append(target[2])
                 tar_bkg_pix.append(target[3])
 
                 reference = self._calculate_signal(self.current_refstack[self.default_pars.drop_first_+1::, :, :],
-                                                   kinet_mask[self.default_pars.drop_first_+1::, :, :])
+                                                   kinet_mask[self.default_pars.drop_first_+1::, :, :],
+                                                   current_cell)
                 ref_signal.append(reference[0])
                 ref_bkg.append(reference[1])
                 ref_pixels.append(reference[2])
