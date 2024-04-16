@@ -48,13 +48,13 @@ class roi_annotate(MagicTemplate):
          self.Frame1.proc_but.text  = 'Process'
          self.Frame3.save_butt.text = 'Save all data...'
 
-    def _roi_to_range(self, roi):
-        roi = roi.astype(np.int16)
-        xstart = np.min(roi[:,0])
-        xend   = np.max(roi[:,0])
-        ystart = np.min(roi[:,1])
-        yend   = np.max(roi[:,1])
-        return xstart, xend, ystart, yend
+    # def _roi_to_range(self, roi):
+#         roi = roi.astype(np.int16)
+#         xstart = np.min(roi[:,0])
+#         xend   = np.max(roi[:,0])
+#         ystart = np.min(roi[:,1])
+#         yend   = np.max(roi[:,1])
+#         return xstart, xend, ystart, yend
     
     def _process_disp(self, stack: ImageData, threshold = 0, display=True):
          # Detects kinetochores.
@@ -72,7 +72,7 @@ class roi_annotate(MagicTemplate):
                  self.parent_viewer.layers[layer_name].data = stack_mask.astype(int)
              else:
                 self.parent_viewer.add_image(stack_mask, 
-                            colormap='gray', blending="additive", 
+                            colormap='green', blending="additive", 
                             visible=True, opacity=0.2,
                             name=layer_name)
         
@@ -120,6 +120,7 @@ class roi_annotate(MagicTemplate):
                                        sigma=self.default_pars.gauss_width,
                                        preserve_range=True)
         
+        # Set up shape layers for the pre-defined annotations
         cell_cats = self.default_pars.combo_labels
         colors = self.default_pars.combo_colors
         mask_size = self.current_refstack.shape
@@ -132,7 +133,8 @@ class roi_annotate(MagicTemplate):
             self.parent_viewer.layers[category].brush_size = 3
             self.parent_viewer.layers[category].color = {1:colors[i+1]}
     
-        threshold, stack_mask = self._process_disp(self.bkg_subtracted,
+        # Find the threshold for the bkg subtracted image
+        threshold, _ = self._process_disp(self.bkg_subtracted,
                                                    0, False)
         # Adjust threshold slider
         self.Frame2.thresh_slider.value = threshold
@@ -142,14 +144,14 @@ class roi_annotate(MagicTemplate):
         return
     
     @Frame2.thresh_slider.connect
-    def _thres_disp(self):
+    def _threshold_display(self):
          new_threshold = self.Frame2.thresh_slider.value
          threshold, stack_mask = self._process_disp(self.bkg_subtracted, 
                                                     threshold=new_threshold,
                                                     display=True)
 
     @Frame1.proc_but.connect
-    def _process_roi(self):
+    def _process_stack(self):
         # Go through each shape layer and measure kinetochores
         cell_cats = self.default_pars.combo_labels
         # Set up lists for collecting data, which will be rollde into 
@@ -168,7 +170,7 @@ class roi_annotate(MagicTemplate):
         ref_bkg_pix= []
 
         ##
-
+        # Go through each category and measure each user-defined ROI
         for category in cell_cats:
             cell_mask = self.parent_viewer.layers[category].data
             labeled_cells = label(binary_fill_holes(cell_mask))
