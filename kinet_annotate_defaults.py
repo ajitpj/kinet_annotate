@@ -1,6 +1,8 @@
 # Class defines the default parameters used for analyzing 
 # images.
 from skimage.morphology import ball
+import napari
+import numpy as np
 
 class kinet_annotate_defaults:
         def __init__(self) -> None:
@@ -9,10 +11,10 @@ class kinet_annotate_defaults:
                                  'Metaphase_many_unaligned',
                                  'All_unaligned']
             
-            self.combo_colors  = {1:'green', 
-                                  2:'blue', 
-                                  3:'yellow', 
-                                  4:'red'}
+            self.combo_colors  = {1: "green", 
+                                  2: "blue", 
+                                  3: "yellow", 
+                                  4: "red"}
             
             self.thresh_mult   = 1.2
             self.bkg_footprint = ball(5)

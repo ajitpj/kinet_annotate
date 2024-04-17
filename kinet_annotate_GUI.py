@@ -24,8 +24,9 @@ class roi_annotate(MagicTemplate):
 
     @magicclass(layout="vertical")
     class Frame2:
-        file_select = field(Select, options={'choices': ['1','2']})
+        file_select   = field(Select, options={'choices': ['1','2']})
         thresh_slider = field(Slider, label="Int. threshold")
+        maxproj_butt  = field(PushButton, label="Max. intensity Projection")
 
     @magicclass(layout="vertical")
     class Frame1:
@@ -78,15 +79,15 @@ class roi_annotate(MagicTemplate):
         
          return threshold, stack_mask
     
-    def _calculate_signal(self, stack: ImageData, mask: ImageData, cell: ImageData):
+    def _calculate_signal(self, stack: ImageData, kinet_mask: ImageData, cell_mask: ImageData):
         # stack = raw data
-        # mask  = kinetochore mask
-        # cell  = cell region
-        signal = stack * mask
-        signal = np.ravel(signal[signal>0])
-
-        bkg    = np.logical_and(stack * ~mask, cell)
-        bkg    = np.ravel(bkg[bkg>0])
+        # mask  = kinetochore mask - already trimmed to current cell
+        # cell  = current region
+        signal = stack * kinet_mask
+        signal = np.ravel(signal[signal > 0])
+        
+        bkg    = stack * ~kinet_mask * cell_mask
+        bkg    = np.ravel(bkg[bkg > 0])
         
         return signal.mean(), bkg.mean(), signal, bkg
     
@@ -122,7 +123,7 @@ class roi_annotate(MagicTemplate):
         
         # Set up shape layers for the pre-defined annotations
         cell_cats = self.default_pars.combo_labels
-        colors = self.default_pars.combo_colors
+        colors    = self.default_pars.combo_colors
         mask_size = self.current_refstack.shape
 
         for i, category in enumerate(cell_cats):
@@ -137,6 +138,7 @@ class roi_annotate(MagicTemplate):
         threshold, _ = self._process_disp(self.bkg_subtracted,
                                                    0, False)
         # Adjust threshold slider
+        threshold = int(threshold)
         self.Frame2.thresh_slider.value = threshold
         self.Frame2.thresh_slider.min = threshold - 30
         self.Frame2.thresh_slider.max = threshold + 30
@@ -149,7 +151,13 @@ class roi_annotate(MagicTemplate):
          threshold, stack_mask = self._process_disp(self.bkg_subtracted, 
                                                     threshold=new_threshold,
                                                     display=True)
-
+    
+    @Frame2.maxproj_butt.connect
+    def _maxproj_display(self):
+        self.parent_viewer.add_image(np.max(self.bkg_subtracted, 0),
+                                            name="Max. intensity projection",
+                                            blending="additive")
+                                                
     @Frame1.proc_but.connect
     def _process_stack(self):
         # Go through each shape layer and measure kinetochores
@@ -231,8 +239,5 @@ class roi_annotate(MagicTemplate):
             temp = self.data_dict[key]
             temp["file_id"] = key
             to_be_saved = pd.concat([to_be_saved,temp])
-        
-        with open(self.current_file_id.parent / 'Analysis.json', 'w') as file:
-            json.dump(self.data_dict, file)
             
         to_be_saved.to_excel(self.current_file_id.parent / 'Analysis.xlsx')
